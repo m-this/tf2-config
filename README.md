@@ -10,7 +10,8 @@ Download [`budhud.bat`](https://github.com/m-this/tf2-config/releases/latest/dow
 - waits for TF2 to close;
 - moves every HUD in `tf/custom`, the old mastercomfig VPKs and `tf/cfg/overrides` to `Team Fortress 2/tf2-config-backup/<date>`;
 - installs budhud, mastercomfig and the overrides;
-- keeps your own settings in `tf/cfg/overrides/user.cfg`, taken from the previous `user.cfg`, the previous mastercomfig `overrides/autoexec.cfg`, or `tf/cfg/autoexec.cfg`, in that order.
+- keeps your own settings in `tf/cfg/overrides/user.cfg`: the previous `user.cfg` if it has any, otherwise every autoexec it moved aside plus `tf/cfg/autoexec.cfg`;
+- keeps the other files of the previous `tf/cfg/overrides`, such as class configs.
 
 If a tf2-config `budhud.zip` sits next to `budhud.bat`, the installer uses it instead of downloading. Any other `budhud.zip`, like the official budhud one, is skipped.
 
@@ -23,12 +24,15 @@ mastercomfig runs the `low` preset (`cfg/overrides/setup_hook.cfg`), then these 
 | Module | Why |
 | --- | --- |
 | `fpscap=unlimited` | mastercomfig caps at 400 by default. |
+| `characters=low` | Low turns eyes off; this keeps them, without facial animation. |
 | `shadows=off`, `water=very_low` | The two costliest things Low still draws. |
 | `sheens_speed=off`, `killstreaks=off` | Effects with no gameplay value. |
 
 Addons: `flat-mouse`, `no-pyroland`, `no-soundscapes`, `no-tutorial`.
 
-`cfg/overrides/autoexec.cfg` runs `user.cfg`, then sets `fps_max 0` and `cl_showfps 1`, so a cap in an old autoexec does not survive the install.
+`cfg/overrides/autoexec.cfg` runs `binds.cfg`, then `user.cfg`, then sets `fps_max 0` and `cl_showfps 1`, so a cap in an old autoexec does not survive the install.
+
+`binds.cfg` only adds binds, the defaults stay: console on F9, jump on the mouse wheel down as well as Space, action slot item on Mouse 4, special attack (`+attack3`) on Mouse 5.
 
 Wallbugs are gone from Valve servers since the Scream Fortress XVIII update. A community server brings them back with `sv_wallbug 1`.
 

@@ -121,21 +121,48 @@ function Clear-OldInstall([string] $tf, [string] $backup) {
     if (Test-Path -LiteralPath $overrides) { Move-ToBackup $overrides (Join-Path $backup 'cfg') }
 }
 
-function Restore-UserConfig([string] $tf, [string] $backup) {
-    $userCfg = Join-Path $tf 'cfg\overrides\user.cfg'
-    $candidates = @(
-        (Join-Path $backup 'cfg\overrides\user.cfg'),
-        (Join-Path $backup 'cfg\overrides\autoexec.cfg'),
-        (Join-Path $tf 'cfg\autoexec.cfg')
-    )
-    foreach ($candidate in $candidates) {
-        if ((Test-Path -LiteralPath $candidate) -and -not ((Get-Content -LiteralPath $candidate -Raw) -match 'Written by tf2-config')) {
-            Copy-Item -LiteralPath $candidate -Destination $userCfg
-            Write-Host "  kept your settings from $candidate in cfg\overrides\user.cfg"
-            return
+function Test-UserSettings([string] $path) {
+    if (-not (Test-Path -LiteralPath $path)) { return $false }
+    $text = Get-Content -LiteralPath $path -Raw
+    $text -and ($text -notmatch 'Written by tf2-config') -and ($text -match '(?m)^\s*[^/\s]')
+}
+
+function Get-UserSettingSources([string] $tf, [string] $backup) {
+    $previousUserCfg = Join-Path $backup 'cfg\overrides\user.cfg'
+    if (Test-UserSettings $previousUserCfg) { return @($previousUserCfg) }
+    $sources = @()
+    $backupRoot = Split-Path -Parent $backup
+    $runs = if (Test-Path -LiteralPath $backupRoot) { Get-ChildItem -LiteralPath $backupRoot -Directory | Sort-Object Name } else { @() }
+    foreach ($run in $runs) {
+        $sources += Join-Path $run.FullName 'cfg\overrides\autoexec.cfg'
+        $customBackup = Join-Path $run.FullName 'custom'
+        if (Test-Path -LiteralPath $customBackup) {
+            Get-ChildItem -LiteralPath $customBackup -Directory |
+                ForEach-Object { $sources += Join-Path $_.FullName 'cfg\autoexec.cfg' }
         }
     }
-    New-Item -ItemType File -Path $userCfg | Out-Null
+    $sources += Join-Path $tf 'cfg\autoexec.cfg'
+    $sources | Where-Object { Test-UserSettings $_ }
+}
+
+function Restore-UserConfig([string] $tf, [string] $backup) {
+    $overrides = Join-Path $tf 'cfg\overrides'
+    $previousOverrides = Join-Path $backup 'cfg\overrides'
+    if (Test-Path -LiteralPath $previousOverrides) {
+        Get-ChildItem -LiteralPath $previousOverrides -File |
+            Where-Object { -not (Test-Path -LiteralPath (Join-Path $overrides $_.Name)) -and $_.Name -ne 'user.cfg' } |
+            ForEach-Object {
+                Copy-Item -LiteralPath $_.FullName -Destination $overrides
+                Write-Host "  kept cfg\overrides\$($_.Name)"
+            }
+    }
+    $lines = @()
+    foreach ($source in Get-UserSettingSources $tf $backup) {
+        if ($source -ne (Join-Path $backup 'cfg\overrides\user.cfg')) { $lines += "// from $source" }
+        $lines += Get-Content -LiteralPath $source
+        Write-Host "  kept your settings from $source"
+    }
+    [IO.File]::WriteAllLines((Join-Path $overrides 'user.cfg'), [string[]] $lines, (New-Object Text.UTF8Encoding $false))
 }
 
 Write-Host $Summary
