@@ -73,16 +73,29 @@ function Wait-TfClosed {
     throw "TF2 is still running after $WaitSecondsMax s."
 }
 
-function Get-Zip([string] $workDirectory) {
+function Expand-Tf2ConfigZip([string] $zip, [string] $destination) {
+    Expand-Archive -LiteralPath $zip -DestinationPath $destination
+    $source = Join-Path $destination 'tf'
+    if (Test-Path -LiteralPath (Join-Path $source 'cfg\overrides\tf2-config.cfg')) { return $source }
+    $null
+}
+
+function Get-Tf2ConfigSource([string] $workDirectory) {
     $local = Join-Path (Split-Path -Parent $env:TF2CONFIG_BAT) 'budhud.zip'
     if (Test-Path -LiteralPath $local) {
-        Write-Host "Using $local"
-        return $local
+        $source = Expand-Tf2ConfigZip $local (Join-Path $workDirectory 'local')
+        if ($source) {
+            Write-Host "Using $local"
+            return $source
+        }
+        Write-Host "Skipping $local, it is not a tf2-config zip."
     }
     $zip = Join-Path $workDirectory 'budhud.zip'
     Write-Host "Downloading $ZipUrl"
     Invoke-WebRequest -Uri $ZipUrl -OutFile $zip -UseBasicParsing
-    $zip
+    $source = Expand-Tf2ConfigZip $zip (Join-Path $workDirectory 'download')
+    if (-not $source) { throw "$ZipUrl is not a tf2-config zip." }
+    $source
 }
 
 function Test-Hud([string] $directory) {
@@ -133,10 +146,7 @@ Wait-TfClosed
 $work = Join-Path ([IO.Path]::GetTempPath()) ("tf2-config-" + [guid]::NewGuid())
 New-Item -ItemType Directory -Path $work | Out-Null
 try {
-    $zip = Get-Zip $work
-    Expand-Archive -LiteralPath $zip -DestinationPath (Join-Path $work 'zip')
-    $source = Join-Path $work 'zip\tf'
-    if (-not (Test-Path -LiteralPath (Join-Path $source 'custom\budhud\info.vdf'))) { throw "$zip is not a tf2-config zip." }
+    $source = Get-Tf2ConfigSource $work
 
     $backup = Join-Path (Split-Path -Parent $tf) ('tf2-config-backup\' + (Get-Date -Format 'yyyyMMdd-HHmmss'))
     Clear-OldInstall $tf $backup

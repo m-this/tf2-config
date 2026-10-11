@@ -12,7 +12,7 @@ Download [`budhud.bat`](https://github.com/m-this/tf2-config/releases/latest/dow
 - installs budhud, mastercomfig and the overrides;
 - keeps your own settings in `tf/cfg/overrides/user.cfg`, taken from the previous `user.cfg`, the previous mastercomfig `overrides/autoexec.cfg`, or `tf/cfg/autoexec.cfg`, in that order.
 
-If `budhud.zip` sits next to `budhud.bat`, the installer uses it instead of downloading.
+If a tf2-config `budhud.zip` sits next to `budhud.bat`, the installer uses it instead of downloading. Any other `budhud.zip`, like the official budhud one, is skipped.
 
 Launch options: `-novid -nojoy -nosteamcontroller -nohltv -particles 1 -precachefontchars`.
 

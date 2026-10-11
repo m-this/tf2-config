@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.1
+
+- `budhud.bat` skips a `budhud.zip` next to it that is not a tf2-config zip, such as the official budhud one, and downloads the right one instead of stopping.
+
 ## v1.0.0
 
 - budhud `a1b348d` (Scream Fortress XVIII HUD files) and mastercomfig 9.100.1 on the Low preset.
