@@ -1,0 +1,50 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      # The bat inside a release downloads the zip of that same release, so an
+      # old bat keeps installing what it was published with.
+      - name: build the files
+        run: |
+          make dist VERSION="$GITHUB_REF_NAME" BUILD_CHANNEL=release \
+            ZIP_URL="https://github.com/${{ github.repository }}/releases/download/$GITHUB_REF_NAME/budhud.zip"
+
+      - name: put this tag's changes in the notes
+        run: |
+          awk -v tag="$GITHUB_REF_NAME" '
+            $0 == "## " tag { want = 1; next }
+            want && /^## / { exit }
+            want { print }
+          ' CHANGELOG.md > /tmp/changes.md
+          if [ ! -s /tmp/changes.md ]; then
+            echo "no CHANGELOG.md section for $GITHUB_REF_NAME" >&2
+            exit 1
+          fi
+          sed -e "s|@REPO@|${{ github.repository }}|g" -e "s|@TAG@|$GITHUB_REF_NAME|g" .github/release-notes.md |
+            awk '/<!-- CHANGES -->/ { while ((getline line < "/tmp/changes.md") > 0) print line; next } { print }' \
+            > /tmp/release-notes.md
+
+      - name: checksum the assets
+        run: cd dist && sha256sum budhud.zip budhud.bat > SHA256SUMS && cat SHA256SUMS
+
+      - name: publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --verify-tag \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file /tmp/release-notes.md \
+            dist/budhud.zip dist/budhud.bat dist/SHA256SUMS
