@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.3
+
+- `overrides/binds.cfg` runs after `overrides/user.cfg`, so an old config that rebinds the mouse wheel to `invnext` no longer undoes the wheel jump.
+
 ## v1.0.2
 
 - Eyes are back: `characters=low` instead of the Low preset's `characters=very_low`.

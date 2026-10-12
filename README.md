@@ -30,7 +30,7 @@ mastercomfig runs the `low` preset (`cfg/overrides/setup_hook.cfg`), then these 
 
 Addons: `flat-mouse`, `no-pyroland`, `no-soundscapes`, `no-tutorial`.
 
-`cfg/overrides/autoexec.cfg` runs `binds.cfg`, then `user.cfg`, then sets `fps_max 0` and `cl_showfps 1`, so a cap in an old autoexec does not survive the install.
+`cfg/overrides/autoexec.cfg` runs `user.cfg`, then `binds.cfg`, then sets `fps_max 0` and `cl_showfps 1`, so a cap in an old autoexec does not survive the install.
 
 `binds.cfg` only adds binds, the defaults stay: console on F9, jump on the mouse wheel down as well as Space, action slot item on Mouse 4, special attack (`+attack3`) on Mouse 5.
 
