@@ -145,6 +145,28 @@ function Get-UserSettingSources([string] $tf, [string] $backup) {
     $sources | Where-Object { Test-UserSettings $_ }
 }
 
+$ExecDepthMax = 4
+
+function Expand-Cfg([string] $tf, [string] $path, [int] $depth, [hashtable] $seen) {
+    $seen[$path.ToLowerInvariant()] = $true
+    foreach ($line in Get-Content -LiteralPath $path) {
+        if ($line -match '^\s*(tf_dingalingaling|ds_enable)\b') { continue }
+        if ($line -match '^\s*exec\s+"?([\w./-]+?)(\.cfg)?"?\s*(//.*)?$' -and $Matches[1] -notmatch '^overrides/') {
+            $target = Join-Path $tf ('cfg\' + ($Matches[1] -replace '/', '\') + '.cfg')
+            if ($seen[$target.ToLowerInvariant()]) {
+                "// $($line.Trim()) (already included)"
+                continue
+            }
+            if ($depth -lt $ExecDepthMax -and (Test-Path -LiteralPath $target)) {
+                "// $($line.Trim())"
+                Expand-Cfg $tf $target ($depth + 1) $seen
+                continue
+            }
+        }
+        $line
+    }
+}
+
 function Restore-UserConfig([string] $tf, [string] $backup) {
     $overrides = Join-Path $tf 'cfg\overrides'
     $previousOverrides = Join-Path $backup 'cfg\overrides'
@@ -159,7 +181,7 @@ function Restore-UserConfig([string] $tf, [string] $backup) {
     $lines = @()
     foreach ($source in Get-UserSettingSources $tf $backup) {
         if ($source -ne (Join-Path $backup 'cfg\overrides\user.cfg')) { $lines += "// from $source" }
-        $lines += Get-Content -LiteralPath $source
+        $lines += Expand-Cfg $tf $source 0 @{}
         Write-Host "  kept your settings from $source"
     }
     [IO.File]::WriteAllLines((Join-Path $overrides 'user.cfg'), [string[]] $lines, (New-Object Text.UTF8Encoding $false))

@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.4
+
+- Hit and last-hit sounds are off (`tf_dingalingaling 0`), set after `user.cfg` so an old config cannot turn them back on.
+- `budhud.bat` writes a self-contained `overrides/user.cfg`: every `exec` of a file in `tf/cfg`, such as a cfg.tf `exec binds`, is replaced by that file's lines, and `tf_dingalingaling` and `ds_enable` lines are dropped.
+- Mouse 5 is `+context_action` (extra action), not `+attack3`; Mouse 3 keeps `+attack3`.
+- Automatic demo recording is off (`ds_enable 0`), and `ds_enable` lines are dropped from `user.cfg`.
+- Nightly builds retry when the GitHub API fails.
+
 ## v1.0.3
 
 - `overrides/binds.cfg` runs after `overrides/user.cfg`, so an old config that rebinds the mouse wheel to `invnext` no longer undoes the wheel jump.

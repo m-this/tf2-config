@@ -20,7 +20,7 @@ release)
 	;;
 nightly)
 	budhud_ref=master
-	mastercomfig_version=$(curl -fsSL "https://api.github.com/repos/$MASTERCOMFIG_REPO/releases/latest" |
+	mastercomfig_version=$(curl -fsSL --retry 4 --retry-all-errors "https://api.github.com/repos/$MASTERCOMFIG_REPO/releases/latest" |
 		sed -n 's/^  "tag_name": "\(.*\)",$/\1/p')
 	[ -n "$mastercomfig_version" ] || { echo "no latest mastercomfig release" >&2; exit 1; }
 	;;
@@ -41,7 +41,7 @@ rm -rf build/tf/custom/budhud/.github build/tf/custom/budhud/.gitattributes buil
 
 base_url="https://github.com/$MASTERCOMFIG_REPO/releases/download/$mastercomfig_version"
 while read -r _ file; do
-	curl -fsSL -o "build/tf/custom/$file" "$base_url/$file"
+	curl -fsSL --retry 4 --retry-all-errors -o "build/tf/custom/$file" "$base_url/$file"
 done < mastercomfig.sha256
 if [ "$channel" = release ]; then
 	(cd build/tf/custom && sha256sum -c --quiet ../../../mastercomfig.sha256)
